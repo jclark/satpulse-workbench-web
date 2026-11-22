@@ -7,6 +7,10 @@
     "Build (js/wasm)",
     "Node tests"
   ],
-  "staging": null,
+  "staging": {
+    "commit": "3af53266e128ff489d2020fbe708f4fc5f2ccbfe",
+    "go": "go1.27.4",
+    "digest": "120c0b85ea25422873a98b20a89bbff4447a93ae76ed5e602e3577436eef8c56"
+  },
   "production": null
 }
