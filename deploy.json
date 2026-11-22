@@ -1,0 +1,12 @@
+{
+  "source": "jclark/satpulse",
+  "branch": "workbench-web",
+  "go": "1.27.x",
+  "node": "24",
+  "checks": [
+    "Build (js/wasm)",
+    "Node tests"
+  ],
+  "staging": null,
+  "production": null
+}

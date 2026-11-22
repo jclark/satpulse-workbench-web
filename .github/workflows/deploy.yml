@@ -1,0 +1,107 @@
+# Builds the browser Workbench from source and deploys it to GitHub Pages.
+# deploy.json names the staging and production builds; README.md describes
+# the actions.
+
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: stage the branch head, promote staging, or redeploy deploy.json as it is
+        type: choice
+        options: [ stage, promote, redeploy ]
+  push:
+    branches: [ main ]
+    paths: [ deploy.json ]
+
+# Runs one at a time: each deploy publishes the whole site and records the
+# result in deploy.json.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      deploy: ${{ steps.build.outputs.deploy }}
+      message: ${{ steps.choose.outputs.message }}
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Read toolchain versions
+      id: config
+      run: |
+        echo "go=$(jq -r .go deploy.json)" >> "$GITHUB_OUTPUT"
+        echo "node=$(jq -r .node deploy.json)" >> "$GITHUB_OUTPUT"
+
+    - name: Set up Go
+      uses: actions/setup-go@v7
+      with:
+        go-version: ${{ steps.config.outputs.go }}
+        cache: false
+
+    - name: Set up Node
+      uses: actions/setup-node@v7
+      with:
+        node-version: ${{ steps.config.outputs.node }}
+
+    - name: Choose builds
+      id: choose
+      env:
+        GH_TOKEN: ${{ github.token }}
+        ACTION: ${{ inputs.action || 'redeploy' }}
+      run: ./choose.sh "$ACTION" deploy.json "$RUNNER_TEMP/chosen.json" >> "$GITHUB_OUTPUT"
+
+    - name: Build site
+      id: build
+      run: |
+        ./build-site.sh "$RUNNER_TEMP/chosen.json" "$RUNNER_TEMP/deploy.json" "$RUNNER_TEMP/site"
+        echo "deploy=$(jq -c . "$RUNNER_TEMP/deploy.json")" >> "$GITHUB_OUTPUT"
+
+    - name: Upload site
+      uses: actions/upload-pages-artifact@v5
+      with:
+        path: ${{ runner.temp }}/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - name: Deploy to Pages
+      id: deployment
+      uses: actions/deploy-pages@v5
+
+  # Records what is now live. A push made with the workflow's token does not
+  # start another run.
+  record:
+    needs: [ build, deploy ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Commit deploy.json
+      env:
+        DEPLOY: ${{ needs.build.outputs.deploy }}
+        MESSAGE: ${{ needs.build.outputs.message }}
+      run: |
+        jq . <<<"$DEPLOY" > deploy.json
+        if git diff --quiet; then exit 0; fi
+        git config user.name 'github-actions[bot]'
+        git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+        git commit -q -am "$MESSAGE"
+        git push
