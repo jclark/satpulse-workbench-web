@@ -12,5 +12,9 @@
     "go": "go1.27.4",
     "digest": "26e6f3f4d68bae755988ce147d1436b96001db15c19078dcb2eaa31ec8fc48bb"
   },
-  "production": null
+  "production": {
+    "commit": "bca6b87a6dffa239fce4d8e105e5738b2262f807",
+    "go": "go1.27.4",
+    "digest": "26e6f3f4d68bae755988ce147d1436b96001db15c19078dcb2eaa31ec8fc48bb"
+  }
 }
