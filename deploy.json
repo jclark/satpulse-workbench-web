@@ -8,9 +8,9 @@
     "Node tests"
   ],
   "staging": {
-    "commit": "3af53266e128ff489d2020fbe708f4fc5f2ccbfe",
+    "commit": "bca6b87a6dffa239fce4d8e105e5738b2262f807",
     "go": "go1.27.4",
-    "digest": "120c0b85ea25422873a98b20a89bbff4447a93ae76ed5e602e3577436eef8c56"
+    "digest": "26e6f3f4d68bae755988ce147d1436b96001db15c19078dcb2eaa31ec8fc48bb"
   },
   "production": null
 }
